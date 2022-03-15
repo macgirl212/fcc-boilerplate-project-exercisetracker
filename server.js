@@ -1,3 +1,4 @@
+const connectDB = require('./db/connect')
 const express = require('express')
 const app = express()
 const cors = require('cors')
@@ -10,9 +11,15 @@ app.get('/', (req, res) => {
 });
 
 
+const port = process.env.PORT || 3000
 
+const start = async () => {
+  try {
+    await connectDB(process.env.MONGO_URI)
+    app.listen(port, console.log(`server is connected to database and listening on port ${port}`))
+  } catch (error) {
+    console.log(error)
+  }
+}
 
-
-const listener = app.listen(process.env.PORT || 3000, () => {
-  console.log('Your app is listening on port ' + listener.address().port)
-})
+start()
