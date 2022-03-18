@@ -41,13 +41,20 @@ const addNewExercise = async (req, res) => {
             date = new Date(date).toDateString()
         }
 
+        // log the new count of exercises
+        const log = await User.findById(userID).exec()
+        const count = await log.log.length
+
         await User.findByIdAndUpdate(userID, {
                 $push: { 
-                    "log" : {
+                    "log": {
                          "description": description, 
                         "duration": duration, 
                         "date": date 
                     }
+                },
+                $set: {
+                    "count": count + 1
                 }
             }, {
                 new: true,
