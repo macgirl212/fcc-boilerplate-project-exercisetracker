@@ -29,32 +29,24 @@ const getAllUsers = async (req, res) => {
 const addNewExercise = async (req, res) => {
     try {
         // get all params from body
-        const { id: userID } = req.params
+        const { _id: userID } = req.params
         const description = req.body.description
         const duration = req.body.duration
-        let tempDate = req.body.date
+        let date = req.body.date
 
         // date formatting
-        const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thr', 'Fri', 'Sat']
-
-        if (tempDate === '') {
-            tempDate = new Date()
+        if (date === '') {
+            date = new Date().toDateString()
         } else {
-            tempDate = new Date(tempDate)
+            date = new Date(date).toDateString()
         }
-
-        let day = tempDate.getDay()
-        let date = tempDate.toISOString().replace(/T.*/,'').split('-')
-        date.push(date.shift())
-        const fullDate = `${daysOfWeek[day]} ${date.join(' ')}`
-        // end date formatting
 
         await User.findByIdAndUpdate(userID, {
                 $push: { 
                     "log" : {
                          "description": description, 
                         "duration": duration, 
-                        "date": fullDate 
+                        "date": date 
                     }
                 }
             }, {
@@ -62,10 +54,21 @@ const addNewExercise = async (req, res) => {
                 runValidators: true
             }
         )
-        res.status(201).json({ "description": description, "duration": duration, "date": fullDate })
+        res.status(201).json({ "description": description, "duration": duration, "date": date })
     } catch (error) {
         console.log(error)
     }
 }
 
-module.exports = { createNewUser, getAllUsers, addNewExercise }
+const getAllExercises = async (req, res) => {
+    try {
+        const { _id: userID } = req.params
+
+        const allExercises = await User.find({ _id: userID })
+        res.status(200).send(allExercises)
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+module.exports = { createNewUser, getAllUsers, addNewExercise, getAllExercises }
