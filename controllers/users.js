@@ -78,13 +78,14 @@ const getAllExercises = async (req, res) => {
         if (from && to) {
             queryObject.fromDate = new Date(from)
             queryObject.toDate = new Date(to)
-            console.log(queryObject.fromDate, queryObject.toDate)
-            const allExercises = await User.find({ _id: userID })
-                .select("log")
-                .populate({
-                    "path": 'log.date',
-                    "match": { date: { "$gte": queryObject.fromDate } }
-                })
+            let formattedLog = []
+            const allExercises = await User.find({  _id: userID })
+            for (let i = 0; i < allExercises[0].log.length; i++) {
+                if (moment(allExercises[0].log[i].date).isBetween(queryObject.fromDate, queryObject.toDate)) {
+                    formattedLog.push(allExercises[0].log[i])
+                }
+            }
+            allExercises[0].log = formattedLog
             return res.status(200).send(allExercises)
         }
 
