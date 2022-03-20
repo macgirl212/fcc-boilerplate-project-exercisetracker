@@ -10,7 +10,8 @@ const logSchema = new mongoose.Schema({
         required: [true, 'Please provide duration']
     },
     date: {
-        type: String
+        type: Date,
+        default: Date.now()
     }
 })
 

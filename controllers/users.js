@@ -1,4 +1,5 @@
 const User = require('../models/User')
+const moment = require('moment')
 
 // add user
 const createNewUser = async (req, res) => {
@@ -36,9 +37,9 @@ const addNewExercise = async (req, res) => {
 
         // date formatting
         if (date === '') {
-            date = new Date().toDateString()
+            date = new Date()
         } else {
-            date = new Date(date).toDateString()
+            date = new Date(date)
         }
 
         // log the new count of exercises
@@ -61,7 +62,7 @@ const addNewExercise = async (req, res) => {
                 runValidators: true
             }
         )
-        res.status(201).json({ "description": description, "duration": duration, "date": date })
+        res.status(201).json({ "description": description, "duration": duration, "date": date.toDateString() })
     } catch (error) {
         console.log(error)
     }
@@ -69,10 +70,28 @@ const addNewExercise = async (req, res) => {
 
 const getAllExercises = async (req, res) => {
     try {
+        // get all params and query information
         const { _id: userID } = req.params
+        const { from, to, limit } = req.query
+        const queryObject = {}
+
+        if (from && to) {
+            queryObject.fromDate = new Date(from)
+            queryObject.toDate = new Date(to)
+            console.log(queryObject.fromDate, queryObject.toDate)
+            const allExercises = await User.find({ _id: userID })
+                .select("log")
+                .populate({
+                    "path": 'log.date',
+                    "match": { date: { "$gte": queryObject.fromDate } }
+                })
+            return res.status(200).send(allExercises)
+        }
 
         const allExercises = await User.find({ _id: userID })
-        res.status(200).send(allExercises)
+        const selectedExercises = allExercises[0].log
+
+        res.status(200).send(selectedExercises)
     } catch (error) {
         console.log(error)
     }
