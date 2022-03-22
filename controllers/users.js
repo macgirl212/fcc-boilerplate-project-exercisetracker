@@ -73,21 +73,35 @@ const getAllExercises = async (req, res) => {
         // get all params and query information
         const { _id: userID } = req.params
         const { from, to, limit } = req.query
+        let maxExercises
         const queryObject = {}
 
+        // select exercises if "from" and "to" params are passed
+        // temp code, because idk why $gte and $lte aren't working, but this code does the same thing
         if (from && to) {
             queryObject.fromDate = new Date(from)
             queryObject.toDate = new Date(to)
             let formattedLog = []
+            
             const allExercises = await User.find({  _id: userID })
+            
+            // find all the selected dates
             for (let i = 0; i < allExercises[0].log.length; i++) {
                 if (moment(allExercises[0].log[i].date).isBetween(queryObject.fromDate, queryObject.toDate)) {
                     formattedLog.push(allExercises[0].log[i])
                 }
             }
-            allExercises[0].log = formattedLog
+
+            // limit handler
+            if (limit) {
+                maxExercises = Number(limit)
+            } else {
+                maxExercises = allExercises[0].log.length
+            }
+            allExercises[0].log = formattedLog.slice(0, maxExercises)
             return res.status(200).send(allExercises)
         }
+        // end of temp code
 
         const allExercises = await User.find({ _id: userID })
         const selectedExercises = allExercises[0].log
