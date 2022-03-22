@@ -75,36 +75,59 @@ const getAllExercises = async (req, res) => {
         const { from, to, limit } = req.query
         let maxExercises
         const queryObject = {}
+        let selectedLog = []
+
+        // get all informtion from user id
+        const allExercises = await User.find({  _id: userID })
+
+        // select only the id, username, and count
+        const selectedExercises = allExercises.map(({_id, username, count}) => ({
+            _id: _id,
+            username: username,
+            count: count
+        }))
 
         // select exercises if "from" and "to" params are passed
-        // temp code, because idk why $gte and $lte aren't working, but this code does the same thing
+        // temp code, because idk why $gte and $lte aren't working, but this code does the same thing, even though it's ugly :/
         if (from && to) {
             queryObject.fromDate = new Date(from)
             queryObject.toDate = new Date(to)
-            let formattedLog = []
-            
-            const allExercises = await User.find({  _id: userID })
-            
+   
             // find all the selected dates
             for (let i = 0; i < allExercises[0].log.length; i++) {
                 if (moment(allExercises[0].log[i].date).isBetween(queryObject.fromDate, queryObject.toDate)) {
-                    formattedLog.push(allExercises[0].log[i])
+                    selectedLog.push(allExercises[0].log[i])
                 }
             }
-
-            // limit handler
-            if (limit) {
-                maxExercises = Number(limit)
-            } else {
-                maxExercises = allExercises[0].log.length
-            }
-            allExercises[0].log = formattedLog.slice(0, maxExercises)
-            return res.status(200).send(allExercises)
+            // format dates
+            selectedLog = selectedLog.map(({description, duration, date, _id}) => ({
+                description: description,
+                duration: duration,
+                date: date.toDateString(),
+                _id: _id
+            }))
+        } else {
+            // find all exercises and format dates
+            selectedLog = allExercises[0].log.map(({description, duration, date, _id}) => ({
+                description: description,
+                duration: duration,
+                date: date.toDateString(),
+                _id: _id
+            }))
         }
-        // end of temp code
 
-        const allExercises = await User.find({ _id: userID })
-        const selectedExercises = allExercises[0].log
+        // limit handler
+        if (limit) {
+            maxExercises = Number(limit)
+        } else {
+            maxExercises = allExercises[0].log.length
+        }
+        selectedLog = selectedLog.slice(0, maxExercises)
+
+        // put selected and formatted log in the selected exercises object
+        selectedExercises[0].log = selectedLog
+
+        // end of temp code
 
         res.status(200).send(selectedExercises)
     } catch (error) {
