@@ -39,7 +39,7 @@ const addNewExercise = async (req, res) => {
         if (date === '') {
             date = new Date()
         } else {
-            date = new Date(date)
+            date = new Date(date.replace(/-/g, '\/')) // replacing "-" with "/" avoids errors in date
         }
 
         // log the new count of exercises
@@ -73,6 +73,7 @@ const getAllExercises = async (req, res) => {
         // get all params and query information
         const { _id: userID } = req.params
         const { from, to, limit } = req.query
+
         let maxExercises
         const queryObject = {}
         let selectedLog = []
@@ -87,12 +88,24 @@ const getAllExercises = async (req, res) => {
             count: count
         }))
 
+        // check validity of from and to parameters
+        if (from) {
+            queryObject.fromDate = new Date(from.replace(/-/g, '\/'))
+            if (isNaN(Date.parse(queryObject.fromDate))) {
+                return res.status(500).send("Invalid date")
+            }
+        }
+
+        if (to) {
+            queryObject.toDate = new Date(to.replace(/-/g, '\/'))
+            if (isNaN(Date.parse(queryObject.toDate))) {
+                return res.status(500).send("Invalid date")
+            }
+        }
+
         // select exercises if "from" and "to" params are passed
         // temp code, because idk why $gte and $lte aren't working, but this code does the same thing, even though it's ugly :/
         if (from && to) {
-            queryObject.fromDate = new Date(from)
-            queryObject.toDate = new Date(to)
-   
             // find all the selected dates
             for (let i = 0; i < allExercises[0].log.length; i++) {
                 if (moment(allExercises[0].log[i].date).isBetween(queryObject.fromDate, queryObject.toDate)) {
