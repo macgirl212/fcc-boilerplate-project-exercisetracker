@@ -46,7 +46,7 @@ const addNewExercise = async (req, res) => {
         const log = await User.findById(userID).exec()
         const count = await log.log.length
 
-        await User.findByIdAndUpdate(userID, {
+        const user = await User.findByIdAndUpdate(userID, {
                 $push: { 
                     "log": {
                          "description": description, 
@@ -62,7 +62,7 @@ const addNewExercise = async (req, res) => {
                 runValidators: true
             }
         )
-        res.status(201).json({ "description": description, "duration": duration, "date": date.toDateString() })
+        res.status(201).json({"username": user.username, "description": description, "duration": Number(duration), "date": date.toDateString(), "_id": user._id })
     } catch (error) {
         console.log(error)
     }
