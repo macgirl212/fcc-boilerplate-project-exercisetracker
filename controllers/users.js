@@ -31,19 +31,18 @@ const addNewExercise = async (req, res) => {
     try {
         // get all params from body
         const { _id: userID } = req.params
-        const description = req.body.description
-        const duration = req.body.duration
-        let date = req.body.date
+        let { description, duration, date } = req.body
+        let checkedDate = new Date(date)
 
         // date formatting
-        if (date === '') {
-            date = new Date()
+        if (checkedDate instanceof Date && !isNaN(checkedDate)) {
+            date = new Date(date.replace(/-/g, '\/'))  // replacing "-" with "/" avoids errors in date
         } else {
-            date = new Date(date.replace(/-/g, '\/')) // replacing "-" with "/" avoids errors in date
+            date = new Date()
         }
 
         // log the new count of exercises
-        const log = await User.findById(userID).exec()
+        const log = await User.findById(userID)
         const count = await log.log.length
 
         const user = await User.findByIdAndUpdate(userID, {
@@ -51,7 +50,7 @@ const addNewExercise = async (req, res) => {
                     "log": {
                          "description": description, 
                         "duration": duration, 
-                        "date": date 
+                        "date": date.toDateString() 
                     }
                 },
                 $set: {
@@ -113,19 +112,17 @@ const getAllExercises = async (req, res) => {
                 }
             }
             // format dates
-            selectedLog = selectedLog.map(({description, duration, date, _id}) => ({
+            selectedLog = selectedLog.map(({description, duration, date}) => ({
                 description: description,
                 duration: duration,
-                date: date.toDateString(),
-                _id: _id
+                date: date.toDateString() // excuse me, fcc, but isn't this in dateString format?
             }))
         } else {
             // find all exercises and format dates
-            selectedLog = allExercises[0].log.map(({description, duration, date, _id}) => ({
+            selectedLog = allExercises[0].log.map(({description, duration, date}) => ({
                 description: description,
                 duration: duration,
-                date: date.toDateString(),
-                _id: _id
+                date: date.toDateString() // excuse me, fcc, but isn't this in dateString format?
             }))
         }
 
@@ -142,7 +139,7 @@ const getAllExercises = async (req, res) => {
 
         // end of temp code
 
-        res.status(200).send(selectedExercises)
+        res.status(200).send(selectedExercises[0])
     } catch (error) {
         console.log(error)
     }
